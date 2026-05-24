@@ -50,12 +50,14 @@ class LoginViewModel @Inject constructor(
         }
         startPolling(data)
 
-        SingletonImageLoader.get(context)
-            .execute(
-                ImageRequest.Builder(context)
-                    .data(data.qr)
-                    .build()
-            )
+        if (useQR) {
+            SingletonImageLoader.get(context)
+                .execute(
+                    ImageRequest.Builder(context)
+                        .data(data.qr)
+                        .build()
+                )
+        }
 
         isLoading.value = false
         if (useQR) qrLink.value = data.qr

@@ -11,7 +11,7 @@ import java.util.Date
 import javax.inject.Inject
 import kotlin.time.Duration
 
-class XiaomiService @Inject constructor(private val client: HttpClient) {
+class XiaomiApi @Inject constructor(private val client: HttpClient) {
     suspend fun getLoginUrlAndQrCode() =
         client.get("https://account.xiaomi.com/longPolling/loginUrl") {
             url.parameters.appendAll(
@@ -23,7 +23,6 @@ class XiaomiService @Inject constructor(private val client: HttpClient) {
                 "serviceParam" to "",
                 "_locale" to "en_GB",
                 "_dc" to Date().time.toString(),
-                "_json" to "true",
             )
         }
 
