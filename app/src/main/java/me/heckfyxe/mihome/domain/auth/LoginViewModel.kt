@@ -1,8 +1,12 @@
 package me.heckfyxe.mihome.domain.auth
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import coil3.SingletonImageLoader
+import coil3.request.ImageRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import jakarta.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -13,29 +17,63 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.heckfyxe.mihome.data.model.LoginData
 import me.heckfyxe.mihome.data.repository.AuthRepository
+import java.util.concurrent.TimeoutException
 
 @HiltViewModel
-class LoginViewModel @Inject constructor(private val repository: AuthRepository) : ViewModel() {
+class LoginViewModel @Inject constructor(
+    @param:ApplicationContext private val context: Context,
+    private val repository: AuthRepository
+) : ViewModel() {
     val openLoginPage: SharedFlow<String>
         field = MutableSharedFlow<String>()
 
-    val qrCode: StateFlow<String?>
-        field = MutableStateFlow<String?>(null)
+    val displayErrorMessage: SharedFlow<Unit>
+        field = MutableSharedFlow<Unit>()
+
+    val isLoading: StateFlow<Boolean>
+        field = MutableStateFlow(false)
+
+    val qrLink: StateFlow<String?>
+        field = MutableStateFlow(null)
+
+    val didTimeout: StateFlow<Boolean>
+        field = MutableStateFlow(false)
 
     fun login(useQR: Boolean) = viewModelScope.launch {
-        val data = withContext(Dispatchers.IO) { repository.getLoginUrl() }
+        isLoading.value = true
+        val data = try {
+            withContext(Dispatchers.IO) { repository.getLoginUrl() }
+        } catch (_: Exception) {
+            isLoading.value = false
+            displayErrorMessage.emit(Unit)
+            return@launch
+        }
         startPolling(data)
 
-        if (useQR) qrCode.value = data.qr
+        SingletonImageLoader.get(context)
+            .execute(
+                ImageRequest.Builder(context)
+                    .data(data.qr)
+                    .build()
+            )
+
+        isLoading.value = false
+        if (useQR) qrLink.value = data.qr
         else openLoginPage.emit(data.loginUrl)
     }
 
     private fun startPolling(data: LoginData) = viewModelScope.launch {
-        val response = withContext(Dispatchers.IO) {
-            repository.startLongPolling(
-                data.pollingUrl,
-                data.timeout
-            )
+        try {
+            withContext(Dispatchers.IO) {
+                repository.startLongPolling(
+                    data.pollingUrl,
+                    data.timeout
+                )
+            }
+        } catch (_: TimeoutException) {
+            didTimeout.value = true
+        } catch (_: Exception) {
+            displayErrorMessage.emit(Unit)
         }
     }
 }
