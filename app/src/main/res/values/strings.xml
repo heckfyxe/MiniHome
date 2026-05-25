@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">MiHome</string>
+    <string name="polling_service_notification_title">Awaiting login…</string>
 </resources>

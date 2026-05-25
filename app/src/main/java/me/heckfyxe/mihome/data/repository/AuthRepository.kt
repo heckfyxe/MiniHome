@@ -1,6 +1,5 @@
 package me.heckfyxe.mihome.data.repository
 
-import dagger.hilt.android.scopes.ViewModelScoped
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
@@ -13,7 +12,6 @@ import java.util.concurrent.TimeoutException
 import javax.inject.Inject
 import kotlin.time.Duration
 
-@ViewModelScoped
 class AuthRepository @Inject constructor(
     private val xiaomiApi: XiaomiApi,
     private val serializer: Json,

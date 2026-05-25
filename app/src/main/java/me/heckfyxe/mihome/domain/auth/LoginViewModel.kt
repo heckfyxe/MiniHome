@@ -1,6 +1,7 @@
 package me.heckfyxe.mihome.domain.auth
 
 import android.content.Context
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil3.SingletonImageLoader
@@ -17,6 +18,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.heckfyxe.mihome.data.model.LoginData
 import me.heckfyxe.mihome.data.repository.AuthRepository
+import me.heckfyxe.mihome.service.LongPollingForegroundService
 import java.util.concurrent.TimeoutException
 
 @HiltViewModel
@@ -25,10 +27,10 @@ class LoginViewModel @Inject constructor(
     private val repository: AuthRepository
 ) : ViewModel() {
     val openLoginPage: SharedFlow<String>
-        field = MutableSharedFlow<String>()
+        field = MutableSharedFlow()
 
     val displayErrorMessage: SharedFlow<Unit>
-        field = MutableSharedFlow<Unit>()
+        field = MutableSharedFlow()
 
     val isLoading: StateFlow<Boolean>
         field = MutableStateFlow(false)
@@ -48,7 +50,10 @@ class LoginViewModel @Inject constructor(
             displayErrorMessage.emit(Unit)
             return@launch
         }
-        startPolling(data)
+        ContextCompat.startForegroundService(
+            context,
+            LongPollingForegroundService.createIntent(context, data.pollingUrl, data.timeout)
+        )
 
         if (useQR) {
             SingletonImageLoader.get(context)
