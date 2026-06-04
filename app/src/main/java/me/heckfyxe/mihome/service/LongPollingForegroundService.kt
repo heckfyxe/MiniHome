@@ -10,8 +10,6 @@ import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
-import dagger.hilt.android.AndroidEntryPoint
-import jakarta.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -20,13 +18,13 @@ import kotlinx.coroutines.withContext
 import me.heckfyxe.mihome.MainActivity
 import me.heckfyxe.mihome.R
 import me.heckfyxe.mihome.data.repository.AuthRepository
+import org.koin.android.ext.android.inject
 import timber.log.Timber
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 
-@AndroidEntryPoint
 class LongPollingForegroundService : Service() {
     companion object {
         private const val CHANNEL_POLLING_SERVICE =
@@ -46,8 +44,7 @@ class LongPollingForegroundService : Service() {
 
     private val scope = CoroutineScope(Dispatchers.IO)
 
-    @Inject
-    lateinit var repository: AuthRepository
+    private val repository: AuthRepository by inject()
 
     override fun onBind(p0: Intent?): IBinder? = null
 
@@ -98,8 +95,9 @@ class LongPollingForegroundService : Service() {
             }
 
             val intent = Intent(this@LongPollingForegroundService, MainActivity::class.java)
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
             startActivity(intent)
+            stopSelf()
         }
     }
 

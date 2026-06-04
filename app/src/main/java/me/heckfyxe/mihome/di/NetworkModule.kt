@@ -1,9 +1,5 @@
 package me.heckfyxe.mihome.di
 
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.compression.ContentEncoding
@@ -13,17 +9,20 @@ import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import org.koin.core.annotation.Configuration
+import org.koin.core.annotation.Module
+import org.koin.core.annotation.Singleton
 import timber.log.Timber
 
 @Module
-@InstallIn(SingletonComponent::class)
+@Configuration
 class NetworkModule {
-    @Provides
+    @Singleton
     fun json() = Json {
         ignoreUnknownKeys = true
     }
 
-    @Provides
+    @Singleton
     fun httpClient(json: Json) = HttpClient(CIO) {
         install(ContentNegotiation) {
             json(json = json)

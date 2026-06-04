@@ -20,12 +20,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun LoginScreen() {
-    val viewModel: LoginViewModel = hiltViewModel()
+fun LoginScreen(viewModel: LoginViewModel = koinViewModel()) {
     val activity = LocalActivity.current
 
     val qrLink by viewModel.qrLink.collectAsStateWithLifecycle()

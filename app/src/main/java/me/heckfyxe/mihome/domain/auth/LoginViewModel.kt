@@ -1,14 +1,11 @@
 package me.heckfyxe.mihome.domain.auth
 
-import android.content.Context
+import android.app.Application
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil3.SingletonImageLoader
 import coil3.request.ImageRequest
-import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
-import jakarta.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,15 +13,14 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import me.heckfyxe.mihome.data.model.LoginData
 import me.heckfyxe.mihome.data.repository.AuthRepository
 import me.heckfyxe.mihome.service.LongPollingForegroundService
-import java.util.concurrent.TimeoutException
+import org.koin.core.annotation.KoinViewModel
 
-@HiltViewModel
-class LoginViewModel @Inject constructor(
-    @param:ApplicationContext private val context: Context,
-    private val repository: AuthRepository
+@KoinViewModel
+class LoginViewModel(
+    private val context: Application,
+    private val repository: AuthRepository,
 ) : ViewModel() {
     val openLoginPage: SharedFlow<String>
         field = MutableSharedFlow()
@@ -67,20 +63,5 @@ class LoginViewModel @Inject constructor(
         isLoading.value = false
         if (useQR) qrLink.value = data.qr
         else openLoginPage.emit(data.loginUrl)
-    }
-
-    private fun startPolling(data: LoginData) = viewModelScope.launch {
-        try {
-            withContext(Dispatchers.IO) {
-                repository.startLongPolling(
-                    data.pollingUrl,
-                    data.timeout
-                )
-            }
-        } catch (_: TimeoutException) {
-            didTimeout.value = true
-        } catch (_: Exception) {
-            displayErrorMessage.emit(Unit)
-        }
     }
 }

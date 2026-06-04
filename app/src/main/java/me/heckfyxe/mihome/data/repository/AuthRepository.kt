@@ -3,27 +3,31 @@ package me.heckfyxe.mihome.data.repository
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
+import me.heckfyxe.mihome.data.local.database.dao.AccountDao
+import me.heckfyxe.mihome.data.local.database.entities.toEntity
 import me.heckfyxe.mihome.data.model.AccountData
 import me.heckfyxe.mihome.data.model.LoginData
-import me.heckfyxe.mihome.data.remote.XiaomiApi
+import me.heckfyxe.mihome.data.remote.XiaomiAuthApi
 import me.heckfyxe.mihome.util.toModel
+import org.koin.core.annotation.Factory
 import timber.log.Timber
 import java.util.concurrent.TimeoutException
-import javax.inject.Inject
 import kotlin.time.Duration
 
-class AuthRepository @Inject constructor(
-    private val xiaomiApi: XiaomiApi,
+@Factory
+class AuthRepository(
+    private val xiaomiAuthApi: XiaomiAuthApi,
     private val serializer: Json,
+    private val accountDao: AccountDao,
 ) {
     suspend fun getLoginUrl(): LoginData =
-        xiaomiApi.getLoginUrlAndQrCode().toModel(serializer)
+        xiaomiAuthApi.getLoginUrlAndQrCode().toModel(serializer)
 
     suspend fun startLongPolling(url: String, timeout: Duration) {
         val accountData: AccountData = withTimeout(timeout) {
             while (isActive) {
                 try {
-                    return@withTimeout xiaomiApi.startLongPolling(url, timeout)
+                    return@withTimeout xiaomiAuthApi.startLongPolling(url, timeout)
                         .toModel(serializer)
                 } catch (e: Exception) {
                     Timber.e(e)
@@ -32,6 +36,7 @@ class AuthRepository @Inject constructor(
             throw TimeoutException()
         }
 
-        val serviceToken = xiaomiApi.getServiceToken(accountData.location)
+        val serviceToken = xiaomiAuthApi.getServiceToken(accountData.location)
+        accountDao.insertOrUpdate(accountData.toEntity(serviceToken))
     }
 }
