@@ -7,7 +7,7 @@ import androidx.room3.RoomDatabase
 import me.heckfyxe.mihome.data.local.database.dao.AccountDao
 import me.heckfyxe.mihome.data.local.database.entities.Account
 
-@Database(entities = [Account::class], version = 1)
+@Database(entities = [Account::class], version = 1, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun accountDao(): AccountDao
 

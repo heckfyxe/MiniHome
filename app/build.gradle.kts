@@ -6,6 +6,12 @@ plugins {
     alias(libs.plugins.koin.compiler)
 }
 
+kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-Xexplicit-backing-fields")
+    }
+}
+
 android {
     namespace = "me.heckfyxe.mihome"
     compileSdk {
@@ -29,13 +35,6 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-        }
-    }
-
-    //noinspection WrongGradleMethod
-    kotlin {
-        compilerOptions {
-            freeCompilerArgs.add("-Xexplicit-backing-fields")
         }
     }
 
