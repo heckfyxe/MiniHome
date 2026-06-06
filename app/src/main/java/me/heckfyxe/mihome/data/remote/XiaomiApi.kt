@@ -6,11 +6,15 @@ import io.ktor.client.request.headers
 import io.ktor.client.request.post
 import io.ktor.client.statement.bodyAsText
 import io.ktor.util.appendAll
+import kotlinx.serialization.json.Json
 import me.heckfyxe.mihome.crypto.decryptRC4
 import me.heckfyxe.mihome.crypto.encryptRC4
 import me.heckfyxe.mihome.crypto.generateNonce
 import me.heckfyxe.mihome.crypto.signNonce
 import me.heckfyxe.mihome.data.local.database.entities.Account
+import me.heckfyxe.mihome.data.model.ApiResponse
+import me.heckfyxe.mihome.data.model.DevicesResult
+import me.heckfyxe.mihome.data.model.HomeResult
 import me.heckfyxe.mihome.data.model.XiaomiCountry
 import me.heckfyxe.mihome.di.UserScope
 import okio.ByteString.Companion.encode
@@ -20,7 +24,12 @@ import org.koin.core.annotation.Scoped
 
 @Scope(UserScope::class)
 @Scoped
-class XiaomiApi(private val client: HttpClient, @Provided account: Account) {
+class XiaomiApi(
+    private val json: Json,
+    private val client: HttpClient,
+    @Provided private val account: Account,
+    @Provided private val country: XiaomiCountry,
+) {
     private val userId = account.userId.toString()
     private val ssecurity = account.ssecurity
     private val serviceToken = account.serviceToken
@@ -31,19 +40,40 @@ class XiaomiApi(private val client: HttpClient, @Provided account: Account) {
         "$randomText-$agentId APP/com.xiaomi.mihome APPV/10.5.201"
     }
 
-    suspend fun getHomes(country: XiaomiCountry) = apiCall(
-        "${country.apiUrl}/v2/homeroom/gethome", mapOf(
-            "data" to "{\"fg\": true, \"fetch_share\": true, \"fetch_share_dev\": true, \"limit\": 300, \"app_ver\": 7}"
+    suspend fun getHomes(): ApiResponse<HomeResult> = apiCall(
+        "/v2/homeroom/gethome", mapOf(
+            "data" to json.encodeToString(
+                mapOf(
+                    "fg" to true,
+                    "fetch_share" to true,
+                    "fetch_share_dev" to true,
+                    "limit" to 300,
+                    "app_ver" to 7
+                )
+            )
         )
     )
 
+    suspend fun getDevices(ownerId: String, homeId: String): ApiResponse<DevicesResult> = apiCall(
+        "/v2/home/home_device_list", mapOf(
+            "data" to json.encodeToString(
+                mapOf(
+                    "home_owner" to ownerId,
+                    "home_id" to homeId,
+                    "limit" to 200,
+                    "get_split_device" to true,
+                    "support_smart_home" to true,
+                )
+            )
+        )
+    )
 
-    private suspend fun apiCall(url: String, params: Map<String, String>): String {
+    private suspend inline fun <reified T> apiCall(url: String, params: Map<String, String>): T {
         val nonce = generateNonce()
         val signedNonce = signNonce(ssecurity, nonce)
         val params = params.toMutableMap()
-        val fields = generateEncParams(url, "POST", signedNonce, nonce, params)
-        val response = client.post(url) {
+        val fields = generateEncParams(url, signedNonce, nonce, params)
+        val response = client.post(country.apiUrl + url) {
             this.url.parameters.appendAll(fields)
             headers {
                 appendAll(
@@ -65,18 +95,17 @@ class XiaomiApi(private val client: HttpClient, @Provided account: Account) {
                 "channel" to "MI_APP_STORE",
             ).forEach(::cookie)
         }
-        return decryptRC4(signedNonce, response.bodyAsText())
+        return json.decodeFromString(decryptRC4(signedNonce, response.bodyAsText()))
     }
 
     private fun generateEncSignature(
         url: String,
-        method: String,
         signedNonce: String,
         params: Map<String, String>,
     ): String {
         val signatureParams = buildList {
-            add(method.uppercase())
-            add(url.split("com")[1].replace("/app/", "/"))
+            add("POST")
+            add(url)
             params.forEach { (k, v) -> add("$k=$v") }
             add(signedNonce)
         }
@@ -86,14 +115,13 @@ class XiaomiApi(private val client: HttpClient, @Provided account: Account) {
 
     private fun generateEncParams(
         url: String,
-        method: String,
         signedNonce: String,
         nonce: String,
         params: MutableMap<String, String>,
     ): Map<String, String> {
-        params["rc4_hash__"] = generateEncSignature(url, method, signedNonce, params)
+        params["rc4_hash__"] = generateEncSignature(url, signedNonce, params)
         params.replaceAll { _, value -> encryptRC4(signedNonce, value) }
-        params["signature"] = generateEncSignature(url, method, signedNonce, params)
+        params["signature"] = generateEncSignature(url, signedNonce, params)
         params["ssecurity"] = ssecurity
         params["_nonce"] = nonce
         return params

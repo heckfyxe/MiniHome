@@ -37,6 +37,6 @@ class AuthRepository(
         }
 
         val serviceToken = xiaomiAuthApi.getServiceToken(accountData.location)
-        accountDao.insertOrUpdate(accountData.toEntity(serviceToken))
+        accountDao.upsert(accountData.toEntity(serviceToken))
     }
 }

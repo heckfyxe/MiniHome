@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import me.heckfyxe.mihome.data.local.database.dao.AccountDao
 import me.heckfyxe.mihome.data.local.database.entities.Account
+import me.heckfyxe.mihome.data.model.XiaomiCountry
 import me.heckfyxe.mihome.di.UserScope
 import org.koin.core.annotation.KoinViewModel
 import org.koin.core.component.KoinComponent
@@ -35,6 +36,7 @@ class MainViewModel(accountDao: AccountDao) : ViewModel(), KoinComponent {
                 is MainActivityUiState.LoggedIn -> {
                     val scope = getKoin().getOrCreateScope<UserScope>(UserScope.getScopeId())
                     scope.declare(it.account)
+                    scope.declare(XiaomiCountry.Germany)
                 }
             }
         }

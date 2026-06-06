@@ -16,10 +16,13 @@ class HomeViewModel(private val repository: HomeRepository) : ViewModel() {
     init {
         viewModelScope.launch(Dispatchers.IO) {
             runCatching {
-                repository.getHomes().also(Timber::d)
+                repository.getHomes().toString().also(Timber::d)
+                repository.getDevices()
             }.onFailure(Timber::e)
         }
     }
+
+    val homes = repository.getHomesWithRoomsAndDevicesFlow()
 
     fun logout() {
         viewModelScope.launch(Dispatchers.IO) {
