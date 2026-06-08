@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -18,12 +19,16 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import kotlinx.serialization.Serializable
+import me.heckfyxe.mihome.data.local.database.entities.Device
+import me.heckfyxe.mihome.di.DeviceScope
 import me.heckfyxe.mihome.di.UserScope
 import me.heckfyxe.mihome.domain.auth.LoginScreen
+import me.heckfyxe.mihome.domain.device.DeviceScreen
 import me.heckfyxe.mihome.domain.home.HomeScreen
 import me.heckfyxe.mihome.ui.theme.MiHomeTheme
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.compose.getKoin
+import org.koin.compose.scope.KoinScope
 import org.koin.compose.scope.UnboundKoinScope
 import org.koin.core.annotation.KoinDelicateAPI
 import org.koin.core.annotation.KoinExperimentalAPI
@@ -56,7 +61,15 @@ class MainActivity : ComponentActivity() {
                     entryProvider = entryProvider {
                         entry(Splash) { }
                         entry(LoginScreen) { LoginScreen() }
-                        entry(HomeScreen) { HomeScreen() }
+                        entry(HomeScreen) { HomeScreen(onDeviceClick = { navBackStack.add(DeviceScreen(it)) }) }
+                        entry<DeviceScreen> { screen ->
+                            KoinScope({
+                                getOrCreateScope<DeviceScope>(DeviceScreen.getScopeId())
+                                    .apply { declare(screen.device) }
+                            }) {
+                                DeviceScreen()
+                            }
+                        }
                     },
                 )
 
@@ -96,3 +109,7 @@ data object LoginScreen : NavKey
 
 @Serializable
 data object HomeScreen : NavKey
+
+@Immutable
+@Serializable
+data class DeviceScreen(val device: Device) : NavKey

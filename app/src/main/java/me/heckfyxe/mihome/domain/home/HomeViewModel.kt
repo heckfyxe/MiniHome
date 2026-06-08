@@ -22,7 +22,7 @@ class HomeViewModel(private val repository: HomeRepository) : ViewModel() {
         }
     }
 
-    val homes = repository.getHomesWithRoomsAndDevicesFlow()
+    val devices = repository.getDevicesFlow()
 
     fun logout() {
         viewModelScope.launch(Dispatchers.IO) {

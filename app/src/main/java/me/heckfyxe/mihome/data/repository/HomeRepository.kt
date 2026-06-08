@@ -24,6 +24,8 @@ class HomeRepository(
 ) {
     fun getHomesWithRoomsAndDevicesFlow() = homeDao.getHomesWithRoomsAndDevicesFlow()
 
+    fun getDevicesFlow() = deviceDao.getDevicesFlow()
+
     suspend fun getHomes(): List<HomeWithRooms> {
         val homesResponse = xiaomiApi.getHomes()
         val entities = homesResponse.result.toEntities()

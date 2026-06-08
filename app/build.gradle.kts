@@ -59,6 +59,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.core.splashscreen)
+    implementation(libs.androidx.compose.material.icons.extended)
 
     implementation(libs.androidx.browser)
 
@@ -78,6 +79,8 @@ dependencies {
     implementation(libs.ktor.client.encoding)
     implementation(libs.ktor.client.content.negotation)
     implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.ktor.network)
+    implementation(libs.ktor.io)
 
     // Logging
     implementation(libs.timber)

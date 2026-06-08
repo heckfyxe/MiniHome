@@ -2,9 +2,11 @@ package me.heckfyxe.mihome.data.local.database.entities
 
 import androidx.room3.Entity
 import androidx.room3.PrimaryKey
+import kotlinx.serialization.Serializable
 import me.heckfyxe.mihome.data.model.DeviceInfo
 
 @Entity
+@Serializable
 data class Device(
     @PrimaryKey val id: String,
     val userId: Long,
