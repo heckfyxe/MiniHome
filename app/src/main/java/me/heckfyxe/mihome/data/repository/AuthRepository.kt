@@ -1,5 +1,6 @@
 package me.heckfyxe.mihome.data.repository
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
@@ -11,7 +12,6 @@ import me.heckfyxe.mihome.data.remote.XiaomiAuthApi
 import me.heckfyxe.mihome.util.toModel
 import org.koin.core.annotation.Factory
 import timber.log.Timber
-import java.util.concurrent.TimeoutException
 import kotlin.time.Duration
 
 @Factory
@@ -30,10 +30,11 @@ class AuthRepository(
                     return@withTimeout xiaomiAuthApi.startLongPolling(url, timeout)
                         .toModel(serializer)
                 } catch (e: Exception) {
+                    if (e is CancellationException) throw e
                     Timber.e(e)
                 }
             }
-            throw TimeoutException()
+            error("unreachable")
         }
 
         val serviceToken = xiaomiAuthApi.getServiceToken(accountData.location)

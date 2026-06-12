@@ -1,6 +1,9 @@
 package me.heckfyxe.mihome.ui.theme
 
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -44,6 +47,19 @@ private val DarkColorScheme = darkColorScheme(
     inverseSurface = InverseSurface,
     inverseOnSurface = InverseOnSurface,
     inversePrimary = InversePrimary,
+    surfaceTint = SurfaceTint,
+    primaryFixed = PrimaryFixed,
+    primaryFixedDim = PrimaryFixedDim,
+    onPrimaryFixed = OnPrimaryFixed,
+    onPrimaryFixedVariant = OnPrimaryFixedVariant,
+    secondaryFixed = SecondaryFixed,
+    secondaryFixedDim = SecondaryFixedDim,
+    onSecondaryFixed = OnSecondaryFixed,
+    onSecondaryFixedVariant = OnSecondaryFixedVariant,
+    tertiaryFixed = TertiaryFixed,
+    tertiaryFixedDim = TertiaryFixedDim,
+    onTertiaryFixed = OnTertiaryFixed,
+    onTertiaryFixedVariant = OnTertiaryFixedVariant,
 )
 
 data class AqiColors(
@@ -57,18 +73,20 @@ data class AqiColors(
 
 val LocalAqiColors = staticCompositionLocalOf { AqiColors() }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun MiHomeTheme(content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalAqiColors provides AqiColors()) {
-        MaterialTheme(
+        MaterialExpressiveTheme(
             colorScheme = DarkColorScheme,
+            motionScheme = MotionScheme.expressive(),
             typography = Typography,
+            shapes = Shapes,
             content = content,
         )
     }
 }
 
-// Usage: MaterialTheme.aqiColors.good
 val MaterialTheme.aqiColors: AqiColors
     @Composable @ReadOnlyComposable
     get() = LocalAqiColors.current

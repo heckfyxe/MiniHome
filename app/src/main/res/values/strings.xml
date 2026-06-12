@@ -1,4 +1,19 @@
 <resources>
     <string name="app_name">MiHome</string>
     <string name="polling_service_notification_title">Awaiting login…</string>
+    <string name="welcome_to_smart_home">Welcome to Smart Home</string>
+    <string name="sign_in_to_control_your_devices">Sign in to control your devices</string>
+    <string name="scan_to_sign_in">Scan to sign in</string>
+    <string name="how_to_scan_qr_code">Open the app on your phone → Profile → Scan QR code</string>
+    <string name="waiting_for_scan">Waiting for scan…</string>
+    <string name="agree_terms_and_privacy_policy">By signing in you agree to the Terms and Privacy Policy</string>
+    <string name="we_never_see_you_password">Encrypted sign-in via your account provider. We never see your password.</string>
+    <string name="qr_expired_refreshing">QR is expired. Refreshing…</string>
+    <string name="qr_code">QR Code</string>
+    <string name="browser">Browser</string>
+    <string name="region">Region: %1$s</string>
+    <string name="try_again">Try again</string>
+    <string name="sign_in_with_your_account">Sign in with your account</string>
+    <string name="you_will_be_redirected">You\'ll be redirected to a secure browser page to authenticate.</string>
+    <string name="continue_in_browser">Continue in browser</string>
 </resources>

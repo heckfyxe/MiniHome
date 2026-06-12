@@ -50,8 +50,25 @@ val Scrim = Color(0xFF000000)
 val InverseSurface = Color(0xFFDEE4DC)
 val InverseOnSurface = Color(0xFF2B322C)
 val InversePrimary = Color(0xFF1E6B43)
+val SurfaceTint = Color(0xFF7FD8A4) // = primary
 
-// Air-quality semantic colors (not standard M3 roles)
+// Fixed accent roles (same tone in light & dark — used for emphasis surfaces, FAB menus, hero containers)
+val PrimaryFixed = Color(0xFF9BF6BF)
+val PrimaryFixedDim = Color(0xFF7FD8A4)
+val OnPrimaryFixed = Color(0xFF002112)
+val OnPrimaryFixedVariant = Color(0xFF005230)
+
+val SecondaryFixed = Color(0xFFD2E8D4)
+val SecondaryFixedDim = Color(0xFFB6CCB9)
+val OnSecondaryFixed = Color(0xFF0C1F13)
+val OnSecondaryFixedVariant = Color(0xFF374B3C)
+
+val TertiaryFixed = Color(0xFFC0E9FA)
+val TertiaryFixedDim = Color(0xFFA4CDDD)
+val OnTertiaryFixed = Color(0xFF001F28)
+val OnTertiaryFixedVariant = Color(0xFF234C59)
+
+// ---- Air-quality semantic colors (not standard M3 roles) ----
 val AqiGood = Color(0xFF7FD8A4)
 val AqiModerate = Color(0xFFF5C84B)
 val AqiPoor = Color(0xFFFFB4AB)

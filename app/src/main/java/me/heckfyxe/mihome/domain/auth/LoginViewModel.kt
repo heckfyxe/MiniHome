@@ -1,67 +1,85 @@
 package me.heckfyxe.mihome.domain.auth
 
-import android.app.Application
+import android.content.Context
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import coil3.SingletonImageLoader
-import coil3.request.ImageRequest
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.heckfyxe.mihome.data.repository.AuthRepository
 import me.heckfyxe.mihome.service.LongPollingForegroundService
 import org.koin.core.annotation.KoinViewModel
+import timber.log.Timber
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 @KoinViewModel
-class LoginViewModel(
-    private val context: Application,
-    private val repository: AuthRepository,
-) : ViewModel() {
-    val openLoginPage: SharedFlow<String>
-        field = MutableSharedFlow()
+class LoginViewModel(private val repository: AuthRepository) : ViewModel() {
+    val state: StateFlow<LoginUiState>
+        field = MutableStateFlow<LoginUiState>(LoginUiState.Loading)
 
-    val displayErrorMessage: SharedFlow<Unit>
-        field = MutableSharedFlow()
+    private var longPollingStartInstant: Instant? = null
+    private var longPollingJob: Job? = null
 
-    val isLoading: StateFlow<Boolean>
-        field = MutableStateFlow(false)
+    init {
+        viewModelScope.launch { loadLoginUrl() }
+    }
 
-    val qrLink: StateFlow<String?>
-        field = MutableStateFlow(null)
-
-    val didTimeout: StateFlow<Boolean>
-        field = MutableStateFlow(false)
-
-    fun login(useQR: Boolean) = viewModelScope.launch {
-        isLoading.value = true
-        val data = try {
-            withContext(Dispatchers.IO) { repository.getLoginUrl() }
-        } catch (_: Exception) {
-            isLoading.value = false
-            displayErrorMessage.emit(Unit)
-            return@launch
+    fun loadAgain() = viewModelScope.launch {
+        state.update {
+            when (it) {
+                LoginUiState.LoadingError -> LoginUiState.Loading
+                is LoginUiState.RefreshError -> LoginUiState.Refreshing(it.oldData)
+                else -> return@launch
+            }
         }
+        loadLoginUrl()
+    }
+
+    fun openInBrowser(context: Context) {
+        val state = state.value
+        if (state !is LoginUiState.Loaded) return
+        longPollingJob?.cancel()
+        val timePassed = Clock.System.now() - (longPollingStartInstant ?: Clock.System.now())
         ContextCompat.startForegroundService(
             context,
-            LongPollingForegroundService.createIntent(context, data.pollingUrl, data.timeout)
+            LongPollingForegroundService.createIntent(context, state.data.pollingUrl, state.data.timeout - timePassed)
         )
+        val intent = CustomTabsIntent.Builder().build()
+        intent.launchUrl(context, state.data.loginUrl.toUri())
+    }
 
-        if (useQR) {
-            SingletonImageLoader.get(context)
-                .execute(
-                    ImageRequest.Builder(context)
-                        .data(data.qr)
-                        .build()
-                )
+    private suspend fun loadLoginUrl() {
+        try {
+            val data = withContext(Dispatchers.IO) { repository.getLoginUrl() }
+            state.value = LoginUiState.Loaded(data)
+            longPollingStartInstant = Clock.System.now()
+            longPollingJob = viewModelScope.launch {
+                try {
+                    withContext(Dispatchers.IO) {
+                        repository.startLongPolling(data.pollingUrl, data.timeout)
+                    }
+                } catch (_: TimeoutCancellationException) {
+                    state.value = LoginUiState.Refreshing(data)
+                    loadLoginUrl()
+                }
+            }
+        } catch (e: Exception) {
+            Timber.e(e)
+            state.update {
+                if (it is LoginUiState.Refreshing)
+                    LoginUiState.RefreshError(it.oldData)
+                else
+                    LoginUiState.LoadingError
+            }
         }
-
-        isLoading.value = false
-        if (useQR) qrLink.value = data.qr
-        else openLoginPage.emit(data.loginUrl)
     }
 }
